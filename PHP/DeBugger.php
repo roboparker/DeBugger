@@ -26,15 +26,12 @@ namespace DeBugger;
  *		syntaxhighlighter 3.0.83 <http://alexgorbatchev.com/SyntaxHighlighter/> 
  *			I modified the php brush to add numbers, user functions and 
  *			new keywords, constants and php function to the definitions.
- *			I also am using my own theme in style tags. 
- *			If you use a theme it should overwrite mine with no problems
  *      jQuery				<http://jquery.com/>
  * 
  * @todo
  *		Exception handling
  *		Error logging
- *		Code output
- *		Theme support
+ *		Email webmaster
  */
 require_once 'DeBuggerTheme.php';
 require_once 'DeBuggerThemeCollection.php';
