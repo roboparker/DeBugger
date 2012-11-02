@@ -190,6 +190,10 @@ class DeBugger {
 		$errname = self::GetErrorName($errno);
 		$title = "$errname: $errstr";
 		
+		//clean buffer
+		ob_get_contents();
+		ob_end_clean();
+		
 		//echo page
 		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
 		die();
@@ -207,6 +211,7 @@ class DeBugger {
 		$handler = ($handler === NULL ? 'DeBugger\DeBugger::Handler' : NULL);
 		$lv = ($lv === NULL ? error_reporting() : NULL);
 		set_error_handler($handler, $lv);
+		ob_start();
 	}
 	
 	/**
