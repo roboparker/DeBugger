@@ -1,4 +1,5 @@
 <?php
+namespace DeBugger;
 /**
  * Debugger @version 1.0
  * 
@@ -35,6 +36,8 @@
  *		Code output
  *		Theme support
  */
+require_once 'DeBuggerTheme.php';
+require_once 'DeBuggerThemeCollection.php';
 class DeBugger {
 
 	/**
@@ -112,114 +115,32 @@ class DeBugger {
 	
 	//styling
 	
-	/**
-	 * Background color
-	 * @var string
-	 */
-	public static $StyleBackground = '#001';
-	
-	/**
-	 * highlighted line background color
-	 * @var string
-	 */
-	public static $StyleHighlighted = '#400';
-	
-	/**
-	 * filehover background color
-	 * @var strin
-	 */
-	public static $StyleHover = '#200';
-	
-	/**
-	 * line number color
-	 * @var string
-	 */
-	public static $StyleGutter = '#666';
-	
-	/**
-	 * highlighted line numbe color
-	 * @var string
-	 */
-	public static $StyleGutterHighlighted = '#FFF';
-	
-	/**
-	 * default/plain text color
-	 * @var string
-	 */
-	public static $StylePlain = '#FFF';
-	
-	/**
-	 * keyword text color
-	 * @var string
-	 */
-	public static $StyleKeyword = '#39F';
-	
-	/**
-	 * constants text color
-	 * @var string
-	 */
-	public static $StyleConstant = '#FC3';
-	
-	/**
-	 * function/method text color
-	 * @var string
-	 */
-	public static $StyleFunction = '#F0E386';
-	
-	/**
-	 * variable text color
-	 * @var string
-	 */
-	public static $StyleVariable = '#9CF';
-	
-	/**
-	 * string text color
-	 * @var string
-	 */
-	public static $StyleString = '#FFA0A0';
-	
-	/**
-	 * number text color
-	 * @var string
-	 */
-	public static $StyleNumber = '#C6F';
-	
-	/**
-	 * comments text color
-	 * @var string
-	 */
-	public static $StyleComments = '#999';
-	
-	/**
-	 * script text color. This would be the php tags if $Html_script is true
-	 * @var string
-	 */
-	public static $StyleScript = '#CCCCCC';
-	
+	private static $Theme;
+
 	//syntaxHighlighter options
 	/**
 	 * Allows you to turn detection of links in the highlighted element on and off
 	 * @var bool
 	 */
-	private static $Auto_links = TRUE;
+	public static $Auto_links = TRUE;
 	
 	/**
 	 * Allows you to add a custom class (or multiple classes) to every highlighter element that will be created on the page
 	 * @var string
 	 */
-	private static $Class_name = '';
+	public static $Class_name = '';
 	
 	/**
 	 * Allows you to force highlighted elements on the page to be collapsed by default.
 	 * @var bool
 	 */
-	private static $Collapse = FALSE;
+	public static $Collapse = FALSE;
 	
 	/**
 	 * Allows you to turn gutter with line numbers on and off
 	 * @var bool
 	 */
-	private static $Gutter = TRUE;
+	public static $Gutter = TRUE;
 	
 	/**
 	 * Allows you to highlight a mixture of HTML/XML code and a script which is very common in web development. 
@@ -228,25 +149,25 @@ class DeBugger {
 	 * PHP code must have opening and closing tags to be rendered correctly if this is set to true
 	 * @var bool 
 	 */
-	private static $Html_script = FALSE;
+	public static $Html_script = FALSE;
 	
 	/**
 	 * Allows you to turn smart tabs feature on and off
 	 * @var bool
 	 */
-	private static $Smart_tabs = TRUE;
+	public static $Smart_tabs = TRUE;
 	
 	/**
 	 * Allows you to adjust tab size
 	 * @var int
 	 */
-	private static $Tab_size = 4;
+	public static $Tab_size = 4;
 	
 	/**
 	 * Toggles toolbar on/off
 	 * @var bool
 	 */
-	private static $Toolbar = TRUE;
+	public static $Toolbar = TRUE;
 	
 	/**
 	 * An error Handler that echos a page and then dies. The page shows a full error backtrace, code from the errors and other usefull information.
@@ -266,11 +187,11 @@ class DeBugger {
 		//backtrace
 		$backtrace = debug_backtrace();
 		array_shift($backtrace);//remove the stack about this handler
-		$data = self::_parse($backtrace);
+		$data = self::_Parse($backtrace);
 
 		//title
 		$errname = self::GetErrorName($errno);
-		$title = "<b>$errname: $errstr</b>";
+		$title = "$errname: $errstr";
 		
 		//echo page
 		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
@@ -279,14 +200,14 @@ class DeBugger {
 	/**
 	 * Set an error handler.
 	 * @param callback $handler A callback to handle php errors. 
-	 * If null it will use the Thebugger::Handler.
-	 * Thebugger::Handler is intended for development only
+	 * If null it will use the DeBugger::Handler.
+	 * DeBugger::Handler is intended for development only
 	 * @param int $lv The error levels the handler should be used for. 
 	 * If null it will use the currently set error levels by using error_reportimg()
 	 * Errors that are not passed to the handler are completly ignored
 	 */
 	public static function SetHandler($lv = NULL, $handler = NULL){
-		$handler = ($handler === NULL ? 'TheBugger::Handler' : NULL);
+		$handler = ($handler === NULL ? 'DeBugger\DeBugger::Handler' : NULL);
 		$lv = ($lv === NULL ? error_reporting() : NULL);
 		set_error_handler($handler, $lv);
 	}
@@ -349,6 +270,10 @@ class DeBugger {
 		echo '</pre>';
 	}
 
+	/**
+	 * dump code that is ready to be highlighted with syntax highlighter
+	 * @param string $code the code to dump
+	 */
 	public static function DumpCode($code){
 		echo "<pre class='brush: php;>"
 			. 'collapse: ' . (self::$Collapse ? 'true' : 'false') . ';'
@@ -359,23 +284,31 @@ class DeBugger {
 			. 'tab-size: ' . self::$Tab_size . ';'
 			. 'toolbar: ' . (self::$Toolbar ? 'true' : 'false') . ';'
 			. "'>"
-			. $code
+			. htmlentities($code)
 			. '</pre>';
 	}
 	
+	/**
+	 * 
+	 * @param DeBuggerTheme $theme A theme for the error page and style() output
+	 */
+	public static function SetTheme(DeBuggerTheme &$theme){
+		self::$Theme = $theme;
+	}
+
 	/**
 	 * parses a backtrace array and returns an array with the parsed information
 	 * @param array $backtrace the backtrace array
 	 * @return array returns an array with the parsed code, files and other information
 	 */
-	private static function _parse(&$backtrace){
+	private static function _Parse(&$backtrace){
 		$code = [];
 		$file = [];
 		$other = [];
 		$otherStr = '';
 		for($i = count($backtrace); $i >= 1; $i--){
 			$b = (object) $backtrace[$i - 1];
-			$code[] = self::_code($b->file, $b->line);
+			$code[] = self::_Code($b);
 			$file[] = self::_File($b);
 		}
 		$code = implode('', $code);
@@ -411,14 +344,17 @@ class DeBugger {
 	 * @param int $errline the line of the errror
 	 * @return string an html formated string with the file and code from the file near the error line
 	 */
-	private static function _code(&$errfile, &$errline){
+	private static function _Code($b){
+		if(!isset($b->line) || !isset($b->file))
+			return "<div></div>";//internal code return empty div
+		$errfile = $b->file;
+		$errline = $b->line;
 		$lines = file($errfile);
 		$start = (($errline - self::$LinesBefore) > 1 ? $errline - self::$LinesBefore : 1);
 		$end = (($errline + self::$LinesAfter) < count($lines) ? $errline + self::$LinesAfter : count($lines));
 		$file = '';
 		for($c = $start; $c <= $end; $c++)
 			$file .= htmlentities($lines[$c - 1]);
-		
 		$errfile = str_replace((self::$Root ? self::$Root : $_SERVER['DOCUMENT_ROOT'] . '/'), '', str_replace('\\', '/', $errfile));
 		return '<div>'
 			. "<h3 class='comments'>$errline: $errfile</h3>"
@@ -440,20 +376,22 @@ class DeBugger {
 	
 	/**
 	 * formats a table with the file names, line of the error, and the function/method call
-	 * @param array $backtrace the backtrace array
+	 * @param array $b the backtrace array
 	 * @return string an html formated string with the files and the line the error was on
 	 */
-	private static function _File(&$backtrace){
-		foreach($backtrace->args as $k => $v)
-			$backtrace->args[$k] = (is_string($v) ? '"' . $v . '"' : $v);
-		$file = str_replace((self::$Root ? self::$Root : $_SERVER['DOCUMENT_ROOT'] . '/'), '', str_replace('\\', '/', $backtrace->file));
-		return '<tr>'//highlight?
+	private static function _File(&$b){
+		if(isset($b->args))
+			foreach($b->args as $k => $v)
+				$b->args[$k] = (is_string($v) ? '"' . $v . '"' : $v);
+		$line = (isset($b->line) ? $b->line : '');
+		$file = (isset($b->file) ? str_replace((self::$Root ? self::$Root : $_SERVER['DOCUMENT_ROOT'] . '/'), '', str_replace('\\', '/', $b->file)) : '[INTERNAL PHP]');
+		return (isset($b->line) && isset($b->file) ? '<tr>' : '<tr class="internal">')
 			. "<td class='file variable'>{$file}</td>"
 			. "<td class='code'>"
 				. '<pre class=\'brush: php; '
 				. 'collapse: false;'
 				. (self::$Class_name ? 'class-name: ' . self::$Class_name . ';' : '')
-				. "first-line: {$backtrace->line};"
+				. "first-line: {$line};"
 				. 'gutter: true;'
 				. 'html-script: false;'
 				. 'smart-tabs: ' . (self::$Smart_tabs ? 'true' : 'false') . ';'
@@ -461,10 +399,10 @@ class DeBugger {
 				. 'toolbar: false;'
 				. '\'>'	
 					. htmlentities(
-						(isset($backtrace->class) ? $backtrace->class : '')
-						. (isset($backtrace->type) ? $backtrace->type : '')
-						. (isset($backtrace->function) ? $backtrace->function : '')
-						. (isset($backtrace->args) ? '(' . implode(', ', $backtrace->args) . ')' : '')
+						(isset($b->class) ? $b->class : '')
+						. (isset($b->type) ? $b->type : '')
+						. (isset($b->function) ? $b->function : '')
+						. (isset($b->args) ? '(' . implode(', ', $b->args) . ')' : '')
 					)
 				. '</pre>'
 			. '</td>'
@@ -492,72 +430,14 @@ class DeBugger {
 	}
 	
 	/**
-	 * @return void echos the script and style tags for syntac highlighter
+	 * outputs the style rules for syntax highlighter
+	 * @return void echos the rules. run in your head.
 	 */
-	public static function syntaxHighlighter(){
+	public static function Style(){
+		if(!self::$Theme)
+			self::SetTheme(DeBuggerThemeCollection::Get());
 ?>
 		<style>
-			/* page layout */
-			*{
-				margin: 0px;
-				padding: 0px;
-			}
-			body, .syntaxhighlighter {
-			  background-color: <?= self::$StyleBackground; ?>
-			}
-			h2{
-				font-size: 1.5em;
-				margin-bottom: 1em;
-			}
-			#wrapper{
-				width:95%;
-				margin:20px auto;
-			}
-			#code{
-				margin: 0 0 2em 3em;
-				height: <?php echo (self::$LinesBefore + self::$LinesAfter) *1 + 3.7; ?>em;
-			}
-			#code>div{
-				display: none;
-			}
-			#code h3{
-				font-size: 1.2em;
-				margin: 0 0 0.5em -1em;
-			}
-			#file{
-				margin-bottom: 2em;
-			}
-			#file>table{
-				width: 100%;
-			}
-			#file>table tr:hover{
-				cursor: pointer;
-				background-color: <?= self::$StyleHover; ?>;
-			}
-			#file>table td.file{
-				width: 250px;
-				padding:0.5em 0 0.5em 1em;
-			}
-			#file>table td .gutter .line{
-				border: 0;
-			}
-			#other{
-				width: 100%;
-				font-size: 0.9em;
-			}
-			#other>div{
-				display:inline-block;
-				min-width: 50%;
-			}
-			#other>div>h3{
-				margin-top:1em;
-			}
-			#other>div>table, #other>div>div.plain{
-				margin-left: 1em;
-			}			
-			#other>div>table td.plain{
-				padding: 0px 1em;
-			}
 			/* syntax highlighter layout*/
 			.syntaxhighlighter a,
 			.syntaxhighlighter div,
@@ -575,6 +455,7 @@ class DeBugger {
 			.syntaxhighlighter{
 				position: relative;
 				overflow: auto;
+				background-color: <?= self::$Theme->Background; ?>;
 			}
 			.syntaxhighlighter table td.code {
 				width: 100%;
@@ -613,7 +494,7 @@ class DeBugger {
 				font-size: 0.8em;
 			}
 			.syntaxhighlighter .toolbar a {
-				color: <?= self::$StyleComments; ?>;
+				color: <?= self::$Theme->Comments; ?>;
 				display: block;
 				padding-top: 0.1em;
 				text-align: center;
@@ -623,51 +504,38 @@ class DeBugger {
 				display: none;
 			}
 			/* colors */
-			.highlighted{
-				background-color: <?= self::$StyleHighlighted; ?>
-			}
 			.syntaxhighlighter .gutter {
-				color: <?= self::$StyleGutter; ?>
+				color: <?= self::$Theme->Gutter; ?>;
 			}
 			.syntaxhighlighter .gutter .line {
-				border-right: 3px solid <?= self::$StyleHighlighted; ?>;
+				border-right: 3px solid <?= self::$Theme->GutterBorder; ?>;
 			}
 			.syntaxhighlighter .gutter .line.highlighted {
-				background-color: <?= self::$StyleHighlighted; ?>;
-				color: <?= self::$StyleGutterHighlighted; ?>;
+				background-color: <?= self::$Theme->GutterHighlightedBackground; ?>;
+				color: <?= self::$Theme->GutterHighlighted;; ?>;
 			}
-			.plain, .plain a {
-				color: <?= self::$StylePlain; ?>;
-			}
-			.comments, .comments a {
-				color: <?= self::$StyleComments; ?>;
-			}
-			.string, .string a {
-				color: <?= self::$StyleString; ?>;
-			}
-			.number, .number a {
-				color: <?= self::$StyleNumber; ?>;
-			}
-			.keyword {
-				color: <?= self::$StyleKeyword; ?>;
-			}
-			.variable {
-				color: <?= self::$StyleVariable; ?>;
-			}
-			.functions {
-				color: <?= self::$StyleFunction; ?>;
-			}
-			.constants {
-				color: <?= self::$StyleConstant; ?>;
-			}
-			.script {
-				font-weight: bold;
-				color: <?= self::$StyleScript; ?>;
-			}
-			.keyword {
-				font-weight: bold;
-			}
+			
+			.syntaxhighlighter .highlighted{background-color: <?= self::$Theme->HighlightedBackground; ?>;}
+			.syntaxhighlighter .plain, .syntaxhighlighter .plain a {color: <?= self::$Theme->Plain; ?>;}
+			.syntaxhighlighter .comments, .syntaxhighlighter .comments a {color: <?= self::$Theme->Comments; ?>;}
+			.syntaxhighlighter .string, .syntaxhighlighter .string a {color: <?= self::$Theme->String; ?>;}
+			.syntaxhighlighter .number{color: <?= self::$Theme->Number; ?>;}
+			.syntaxhighlighter .keyword {color: <?= self::$Theme->Keyword; ?>;}
+			.syntaxhighlighter .variable {color: <?= self::$Theme->Variable; ?>;}
+			.syntaxhighlighter .functions {color: <?= self::$Theme->Function; ?>;}
+			.syntaxhighlighter .constants {color: <?= self::$Theme->Constant; ?>;}
+			.syntaxhighlighter .keyword {font-weight: bold;}
+			.syntaxhighlighter .script {color: <?= self::$Theme->Script; ?>;}
 		</style>
+<?php
+	}
+	
+	/**
+	 * echos the script files and runs syntx highlighter. I suggest you run it after your closing body tag.
+	 * @return void echos the script and style tags for syntac highlighter
+	 */
+	public static function JS(){
+?>
 		<script type="text/javascript" src="<?= self::$PathSyntaxHighlighterScripts; ?>shCore.js"></script>
 		<script type="text/javascript" src="<?= self::$PathSyntaxHighlighterScripts; ?>shBrushPhp.js"></script>
 		<script type="text/javascript" src="<?= self::$PathSyntaxHighlighterScripts; ?>shBrushXml.js"></script>
@@ -691,12 +559,99 @@ class DeBugger {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>Error</title>
-		<?php self::syntaxHighlighter(); ?>
+        <title>Error: <?= $title; ?></title>
+		<?php self::Style(); ?>
+		<style>
+			/* styles for the error page */
+			*{
+				margin: 0px;
+				padding: 0px;
+			}
+			h2{
+				font-size: 1.5em;
+				margin-bottom: 1em;
+			}
+			#wrapper{
+				width:95%;
+				margin:20px auto;
+			}
+			#code{
+				margin: 0 0 2em 3em;
+				height: <?php echo (self::$LinesBefore + self::$LinesAfter) *1 + 3.7; ?>em;
+			}
+			#code>div{
+				display: none;
+			}
+			#code h3{
+				font-size: 1.2em;
+				margin: 0 0 0.5em -1em;
+			}
+			#file{
+				margin-bottom: 2em;
+			}
+			#file>table{
+				width: 100%;
+			}
+			#file>table>tbody>tr:hover{
+				cursor: pointer;
+			}
+			#file>table>tbody>tr.internal{
+				opacity:0.2;
+			}
+			#file>table>tbody>tr.internal:hover{
+				cursor: default;
+				background: none;
+			}
+			#file>table td.file{
+				width: 250px;
+				padding:0.5em 0 0.5em 1em;
+			}
+			#file>table td .gutter .line{
+				border: 0;
+			}
+			#other{
+				width: 100%;
+				font-size: 0.9em;
+			}
+			#other>div{
+				display:inline-block;
+				min-width: 50%;
+			}
+			#other>div>h3{
+				margin-top:1em;
+			}
+			#other>div>table, #other>div>div.plain{
+				margin-left: 1em;
+			}			
+			#other>div>table td.plain{
+				padding: 0px 1em;
+			}
+			
+			/* the background is set to the body instead */
+			.syntaxhighlighter{ background: none; }
+			body { background-color: <?= self::$Theme->Background; ?>; }
+			
+			/* the hover color is the same as the highlighted color */
+			#file>table>tbody>tr:hover{	background-color: <?= self::$Theme->HoverBackground; ?>; }
+			
+			/* use the syntax highlighter themes for styling by removing the .syntaxhighlighter from the selector */
+			.highlighted{ background-color: <?= self::$Theme->HighlightedBackground; ?>; }
+			.plain, .plain a { color: <?= self::$Theme->Plain; ?>; }
+			.comments, .comments a { color: <?= self::$Theme->Comments; ?>; }
+			.string, .string a { color: <?= self::$Theme->String; ?>; }
+			.number{ color: <?= self::$Theme->Number; ?>; }
+			.keyword { color: <?= self::$Theme->Keyword; ?>; }
+			.variable { color: <?= self::$Theme->Variable; ?>; }
+			.functions { color: <?= self::$Theme->Function; ?>; }
+			.constants { color: <?= self::$Theme->Constant; ?>; }
+			.keyword { font-weight: bold; }
+			.script { color: <?= self::$Theme->Script; ?>; }
+		</style>
+		<?php self::JS(); ?>
     </head>
     <body>
-		<div id="wrapper">
-			<h2 class='keyword'><?= $title; ?></h2>
+		<div id="wrapper" >
+			<h2 class='keyword'><b><?= $title; ?></b></h2>
 			<div id="code">
 				<?= $code; ?>
 			</div>
@@ -711,8 +666,9 @@ class DeBugger {
 	<script type="text/javascript">
 		$('#code>div:nth-child(1)').show();
 		$('#file>table>tbody>tr:nth-child(1)').addClass('highlighted');
+		
 		$('#file>table>tbody>tr').live("click", function(){
-			if($(this).hasClass('highlighted'))
+			if($(this).hasClass('highlighted') || $(this).hasClass('internal'))
 				return;
 			var index = $(this).index() +1;
 			$('#file>table>tbody>tr.highlighted').toggleClass('highlighted');

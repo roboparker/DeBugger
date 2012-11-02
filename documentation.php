@@ -1,140 +1,215 @@
 <?php
 require 'PHP/DeBugger.php';
+use DeBugger\DeBugger;
 require 'PHP/Template.php';
 Template::$Content = function(){
 	
-	echo '<a href="" title="Donate" id="donate">Donate</a>';
+	echo '
+	<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+		<input type="hidden" name="cmd" value="_s-xclick">
+		<input type="hidden" name="hosted_button_id" value="396Q7SC4PF844">
+		<input type="submit" name="submit" value="Donate" id="donate" />
+	</form>';
 	
 	echo '<h3>Basic Setup</h3>';
 	DeBugger::DumpCode(<<<'EOD'
-/* ALL reportable errors will generate a 
- * page with a full error report and kill the script
- */
+//include the file
+require_once 'DeBugger.php';
+//use the namespace
+use DeBugger;
+//set handler with no options for default settings
 DeBugger::SetHandler();
 EOD
-);
+	);
 	
-	echo '<h3>Control Error Reporting levels</h3>';
+	echo '<h3>SetHandler Options</h3>';
+	echo '<p>You can control the error levels to be handled and/or set your own handler.</p>';
 	DeBugger::DumpCode(<<<'EOD'
-//with phps error report
-error_reporting(E_ALL ^ E_NOTICE );
-//or as the first parameter
-DeBugger::SetHandler(E_ALL ^ E_NOTICE);
-EOD
-);
+//$lv will set what error levels trigger the handler
+//null will use the error reporting level
+DeBugger::SetHandler(E_ALL ^ E_NOTICE);//all errors except E_NOTICE
 
-	echo '<h3>Display Settings</h3>';
-	echo '<p>Turn On/Off whats displayed on the error page</p>';
+//$handler lets you set your own handler
+function Handler($errno, $errstr, $errfile, $errline){
+	//handle the error
+	die();
+}
+DeBugger::SetHandler(NULL, 'Handler');
+EOD
+	);
+	
+	echo '<h3>General Options</h3>';
 	DeBugger::DumpCode(<<<'EOD'
-//$_SERVER['http_*'] section
+//path to jquery
+DeBugger::$PathJQuery = '//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js';
+
+//path to the scripts directory for syntax highlighter
+DeBugger::$PathSyntaxHighlighterScripts = 'syntaxhighlighter/scripts/';
+
+//Set the number of lines of code to show before the error
+DeBugger::$LinesBefore = 6;
+
+//Set the number of lines of code to show after the error
+DeBugger::$LinesAfter = 4;
+
+/**
+ * document root path. It will strip out the path from the file names on 
+ * the error page. defaults to $_SERVER['DOCUMENT_ROOT']
+ */
+DeBugger::$Root = $_SERVER['DOCUMENT_ROOT'];
+EOD
+	);
+	
+	echo '<h3>Display Options</h3>';
+	echo '<p>Control what sections are displayed on the error page.</p>';
+	DeBugger::DumpCode(<<<'EOD'
+//Turn on/off the display of the $_SERVER['http_*'] section
 DeBugger::$DisplayHTTP = TRUE;
 
-//$_SERVER['request_*'] section
+//Turn on/off the display of the $_SERVER['request_*'] section
 DeBugger::$DisplayRequest = TRUE;
 
-//$_POST[] variables
+//Turn on/off the display of the $_POST[] variables
 DeBugger::$DisplayPost = TRUE;
 
-//$_GET[] variables
+//Turn on/off the display of the $_GET[] variables
 DeBugger::$DisplayGet = TRUE;
 
-//$_COOKIE[]
+//Turn on/off the display of $_COOKIE[]
 DeBugger::$DisplayCookie = TRUE;
 
-//$_SESSION[] variables
+//Turn on/off the display of the $_SESSION[] variables
 DeBugger::$DisplaySession = TRUE;
 
-//$_SERVER[] variables
+//Turn on/off the display of the $_SERVER[] variables
 DeBugger::$DisplayServer = TRUE;
 EOD
-);
+	);
 	
-	echo '<h3>Styling</h3>';
+	echo '<h3>Options for Syntax highlighter</h3>';
+	echo '<p>Set options to be used by syntax highlighter. The options are used as class names and some may be overwritten or not used.</p>';
 	DeBugger::DumpCode(<<<'EOD'
-DeBugger::$StyleBackground = '#001';
-DeBugger::$StyleHighlighted = '#400';
-DeBugger::$StyleHover = '#200';
-DeBugger::$StyleGutter = '#666';
-DeBugger::$StyleGutterHighlighted = '#FFF';
-DeBugger::$StylePlain = '#FFF';
-DeBugger::$StyleKeyword = '#39F';
-DeBugger::$StyleConstant = '#FC3';
-DeBugger::$StyleFunction = '#F0E386';
-DeBugger::$StyleVariable = '#9CF';
-DeBugger::$StyleString = '#FFA0A0';
-DeBugger::$StyleNumber = '#C6F';
-DeBugger::$StyleComments = '#999';
-DeBugger::$StyleScript = '#CCCCCC';
-EOD
-);
-	
-	echo '<h3>Syntax Highlighter Options</h3>';
-	echo '<p>Set options for syntax highlighter. 
-		The oprions are set in the pre class tags.
-		some options will not effect the code outputed on the error page
-		</p>';
-	DeBugger::DumpCode(<<<'EOD'
-//Allows you to turn detection of links in the highlighted element on and off
-private static $Auto_links = TRUE;
+// Allows you to turn detection of links in the highlighted element on and off
+DeBugger::$Auto_links = TRUE;
 
-//Allows you to add a custom class (or multiple classes) to every highlighter element that will be created on the page
-private static $Class_name = '';
+// Allows you to add a custom class (or multiple classes) to every highlighter element that will be created on the page
+DeBugger::$Class_name = '';
 
-//Allows you to force highlighted elements on the page to be collapsed by default.
-private static $Collapse = FALSE;
+// Allows you to force highlighted elements on the page to be collapsed by default.
+DeBugger::$Collapse = FALSE;
 
-//Allows you to turn gutter with line numbers on and off
-private static $Gutter = TRUE;
+// Allows you to turn gutter with line numbers on and off
+DeBugger::$Gutter = TRUE;
 
 /**
  * Allows you to highlight a mixture of HTML/XML code and a script which is very common in web development. 
  * Setting this value to true requires that you have shBrushXml.js loaded and that the brush you are using supports this feature.
  * PHP code must have opening and closing tags to be rendered correctly if this is set to true
  */
-private static $Html_script = FALSE;
+DeBugger::$Html_script = FALSE;
 
-//Allows you to turn smart tabs feature on and off
-private static $Smart_tabs = TRUE;
+// Allows you to turn smart tabs feature on and off
+DeBugger::$Smart_tabs = TRUE;
 
 //number of spaces in a tab
-private static $Tab_size = 4;
+DeBugger::$Tab_size = 4;
 
-//Toggles toolbar on/off
-private static $Toolbar = TRUE;
+// Toggles toolbar on/off
+DeBugger::$Toolbar = TRUE;
 EOD
-);
+	);
+	
+	echo '<h3>Use your own themes</h3>';
+	DeBugger::DumpCode(<<<'EOD'
+DeBugger::SetTheme(new DeBuggerTheme(
+			'#001',			//$background
+			'#400',			//$highlightedBackground 
+			'#200',			//$hoverBackground
+			'#666',			//$gutter
+			'#400',			//$gutterBorder
+			'transparent',	//$gutterBackground
+			'#FFF',			//$gutterHighlighted
+			'#400',			//$gutterHighlightedBackground
+			'#FFF',			//$plain
+			'#39F',			//$keyword
+			'#FC3',			//$constant
+			'#F0E386',		//$function
+			'#9CF',			//$variable
+			'#FFA0A0',		//$string
+			'#CCC',			//$script
+			'#C6F',			//$number
+			'#999'			//$comments
+));
+EOD
+	);
+	
+	echo '<h3>Use a Theme from the collection</h3>';
+	echo '<p>These themes are based off of the syntax highlighte themes. including a syntax highlighter css theme can cause errors.</p>';
+	echo '<p>The Themes are stored internally as arrays. to get the name of the desired theme use the NAME_* propertry constants</p>';
+	DeBugger::DumpCode(<<<'EOD'
+DeBugger::SetTheme(
+	DeBuggerThemeCollection::Get(
+		DeBuggerThemeCollection::NAME_DEFAULT
+));
+EOD
+	);
+	
+	echo '<h3>Add your own theme to the collection</h3>';
+	DeBugger::DumpCode(<<<'EOD'
+DeBugger::Set('MyTheme', new DeBuggerTheme(
+			'#001',			//$background
+			'#400',			//$highlightedBackground 
+			'#200',			//$hoverBackground
+			'#666',			//$gutter
+			'#400',			//$gutterBorder
+			'transparent',	//$gutterBackground
+			'#FFF',			//$gutterHighlighted
+			'#400',			//$gutterHighlightedBackground
+			'#FFF',			//$plain
+			'#39F',			//$keyword
+			'#FC3',			//$constant
+			'#F0E386',		//$function
+			'#9CF',			//$variable
+			'#FFA0A0',		//$string
+			'#CCC',			//$script
+			'#C6F',			//$number
+			'#999'			//$comments
+));
+EOD
+	);
 	
 	echo '<h3>Dumping</h3>';
+	echo 'var_dump and print_r need to be wrapped in pre tags to keep there spacing. 
+		This does it autoamatically and can also dump code ready to be highlighted by syntax highlighter</p>';
 	DeBugger::DumpCode(<<<'EOD'
-//print_r dump
-DeBuger::Dump($data);
+//print_r
+DeBugger::Dump($var);
 
 //var_dump
-DeBugger::Dump($data, FALSE);
-EOD
+DeBugger::Dump($var, FALSE);
+
+//code
+DeBugger::DumpCode(<<<'FOO'
+<?php
+	echo "hello world";
+?>
+Foo
 );
+
+/* to highlight code */
+DeBugger::Style();//in head
+DeBugger::JS();between </body> and </html>
+EOD
+	);
 	
-	echo '<h3>Dumping Code</h3>';
+	echo '<h3>Getting Error Names</h3>';
+	echo '<p>PHP Errors are numbers and this handy method will get you the name of the error level</p>';
 	DeBugger::DumpCode(<<<'EOD'
-//in your head tags to set the styles and run the scripts
-DeBuger::SyntaxHighligher();
-
-//run this where you wish to dumo your code
-DeBugger::DumpCode($code);
+//gets the error name for error 1 which is E_ALL
+$errname = DeBugger::GetErrorName(1);
 EOD
-);
-
-	echo '<h3>Get Error Names</h3>';
-	DeBugger::DumpCode(<<<'EOD'
-$errname = DeBugger::GetErrorName(1);//will return "E_ERROR"
-EOD
-);
-	echo '<h3>Set Your Own Handler</h3>';
-	DeBugger::DumpCode(<<<'EOD'
-DeBugger::SetHandler(E_ALL ^ E_NOTICE, $errorhandler);
-EOD
-);
-
+	);
+	
 	echo '<h3>Other Info</h3>';
 	echo '<p>PHP DeBugger uses a modified version of <a href="http://alexgorbatchev.com/SyntaxHighlighter/" target="_blank">syntaxhighlighter</a> version 3.0.83. 
 		using other versions may cause errors or unexpedected results.</p>';
@@ -145,7 +220,7 @@ EOD
 	
 	echo '<h3>TO DO</h3>';
 	echo '<p>I plan on adding var_logging with backtrace support, email notifications, 
-		exception handling and improving the theme support. I admit it\'s sloppy atm</p>';
+		and exception handling.</p>';
 };
 	
 Template::$Debugger = TRUE;

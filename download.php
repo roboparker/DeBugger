@@ -3,7 +3,11 @@ require 'PHP/Template.php';
 Template::$Content = function(){
 ?>
 	<a href="" title="Download" id="download">Download</a>
-	<a href="" title="Donate" id="donate">Donate</a>
+	<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+		<input type="hidden" name="cmd" value="_s-xclick">
+		<input type="hidden" name="hosted_button_id" value="396Q7SC4PF844">
+		<input type="submit" name="submit" value="Donate" id="donate" />
+	</form>
 	<h3>License</h3>
 	<p>
 		You may use Debuggger under the terms of either the MIT License or the 

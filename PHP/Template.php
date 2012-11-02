@@ -1,4 +1,5 @@
 <?php
+use DeBugger\DeBugger;
 class Template {
 	public static $Content;
 	public static $Debugger = false;
@@ -10,7 +11,8 @@ class Template {
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>PHP Debugger</title>
-		<?php if(self::$Debugger)DeBugger::syntaxHighlighter(); ?>
+		<?php if(self::$Debugger)DeBugger::JS(); ?>
+		<?php if(self::$Debugger)DeBugger::Style(); ?>
 		<style>
 			*{
 				margin: 0px;
@@ -240,7 +242,7 @@ class Template {
 		</footer>
 		
 		<div id='github'  style="position: absolute; top: 0; left: 0; border: 0;" >
-			<a href="https://github.com/you">
+			<a href="https://github.com/yamiko-org/DeBugger" target="_blank">
 			<img
 				 src="https://s3.amazonaws.com/github/ribbons/forkme_left_orange_ff7600.png" alt="Fork me on GitHub">
 			</a>
