@@ -1,7 +1,7 @@
 <?php
 require '../DeBugger/DeBugger.php';
 use DeBugger\DeBugger;
-DeBugger::SetHandler();
+DeBugger::SetErrorHandler();
 DeBugger::$DisplayHTTP = FALSE;
 DeBugger::$DisplayServer = FALSE;
 DeBugger::$DisplaySession = FALSE;

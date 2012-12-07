@@ -28,13 +28,16 @@ namespace DeBugger;
  *			new keywords, constants and php function to the definitions.
  *      jQuery				<http://jquery.com/>
  * 
- * @todo
- *		Exception handling
- *		Error logging
- *		Email webmaster
+ * @changelog:
+ *		added exception handler
+ *		reversed backtrace so it is displayed bottom up
+ *		fixed file list args bug (null etc was converted to string)
+ * @todo JS and Style need to be modified to work with the Theme in Lume.
+ * @todo set some of the properties to private and use setters so they can be validated before code in run latter on in the script
+ * @todo Custom Error logging to a file
+ * @todo Email notifications
+ * @todo release and update documentation. comments have been modified and the dumped code is now wrapped in htmlentities
  */
-require_once 'DeBuggerTheme.php';
-require_once 'DeBuggerThemeCollection.php';
 class DeBugger {
 
 	/**
@@ -62,7 +65,7 @@ class DeBugger {
 	public static $LinesAfter = 4;
 	
 	/**
-	 * document root path. It will strip out the path from the file names on 
+	 * document root path. It will be stripd out the path from the file names on 
 	 * the error page. defaults to $_SERVER['DOCUMENT_ROOT']
 	 * @var string
 	 */
@@ -110,11 +113,12 @@ class DeBugger {
 	 */
 	public static $DisplayServer = TRUE;
 	
-	//styling
-	
+	/**
+	 * a DeBugger theme for display
+	 * @var DeBuggerTheme
+	 */
 	private static $Theme;
 
-	//syntaxHighlighter options
 	/**
 	 * Allows you to turn detection of links in the highlighted element on and off
 	 * @var bool
@@ -175,7 +179,7 @@ class DeBugger {
 	 * @param int $errline
 	 * @return null
 	 */
-	public static function Handler($errno, $errstr, $errfile, $errline){
+	public static function ErrorHandler($errno, $errstr, $errfile, $errline){
 		//exit debug and continue?
 		$report = error_reporting();
 		if($report != ($report | $errno))
@@ -198,6 +202,7 @@ class DeBugger {
 		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
 		die();
 	}
+	
 	/**
 	 * Set an error handler.
 	 * @param callback $handler A callback to handle php errors. 
@@ -207,11 +212,36 @@ class DeBugger {
 	 * If null it will use the currently set error levels by using error_reportimg()
 	 * Errors that are not passed to the handler are completly ignored
 	 */
-	public static function SetHandler($lv = NULL, $handler = NULL){
-		$handler = ($handler === NULL ? 'DeBugger\DeBugger::Handler' : NULL);
+	public static function SetErrorHandler($lv = NULL, $handler = NULL){
+		$handler = ($handler === NULL ? __NAMESPACE__ . '\DeBugger::ErrorHandler' : NULL);
 		$lv = ($lv === NULL ? error_reporting() : NULL);
 		set_error_handler($handler, $lv);
 		ob_start();
+	}
+	
+	public static function SetExceptionHandler($handler = NULL){
+		set_exception_handler( __NAMESPACE__ . '\DeBugger::exception_handler');
+	}
+	
+	public static function exception_handler(\Exception $exception) {		
+		//backtrace
+		$backtrace = $exception->getTrace();
+		array_unshift($backtrace, [
+			'file' => $exception->getFile(), 
+			'line' => $exception->getLine(),
+			'function' => get_class($exception),
+			'args' => [$exception->getMessage(), $exception->getCode(), ($exception->getPrevious() ?: 'NULL')]]);
+		$data = self::_Parse($backtrace);
+		
+		//generate title from the code (like a custom error level) and message
+		$title = $exception->getCode() . ': ' . $exception->getMessage();
+		//clean buffer
+		ob_get_contents();
+		ob_end_clean();
+		
+		//echo page
+		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
+		die();
 	}
 	
 	/**
@@ -259,7 +289,7 @@ class DeBugger {
 	
 	/**
 	 * dumps/echos information about the variable passed.
-	 * This uses var_dump or print_r and outputs them in pre tags
+	 * This uses var_dump or print_r and outputs them in pre tags with htmlentities
 	 * @param type $data The variable you want to get information on
 	 * @param type $readable If true it will use print_r instead of var_dump
 	 * @return null returns nothing. The data is autmatically outputed
@@ -267,13 +297,13 @@ class DeBugger {
 	public static function Dump($data, $readable = TRUE){
 		echo '<pre>';
 		if($readable)
-			print_r($data);
-		var_dump($data);
+			htmlentities(print_r($data));
+		htmlentities(var_dump($data));
 		echo '</pre>';
 	}
 
 	/**
-	 * dump code that is ready to be highlighted with syntax highlighter
+	 * dumps code that is ready to be highlighted with syntax highlighter
 	 * @param string $code the code to dump
 	 */
 	public static function DumpCode($code){
@@ -308,7 +338,7 @@ class DeBugger {
 		$file = [];
 		$other = [];
 		$otherStr = '';
-		for($i = count($backtrace); $i >= 1; $i--){
+		for($i = 1; $i <= count($backtrace); $i++){
 			$b = (object) $backtrace[$i - 1];
 			$code[] = self::_Code($b);
 			$file[] = self::_File($b);
@@ -384,7 +414,7 @@ class DeBugger {
 	private static function _File(&$b){
 		if(isset($b->args))
 			foreach($b->args as $k => $v)
-				$b->args[$k] = (is_string($v) ? '"' . $v . '"' : $v);
+				$b->args[$k] = (is_string($v) && !preg_match('/^(NULL|FALSE|TRUE)$/i', $v) ? '"' . $v . '"' : $v);
 		$line = (isset($b->line) ? $b->line : '');
 		$file = (isset($b->file) ? str_replace((self::$Root ? self::$Root : $_SERVER['DOCUMENT_ROOT'] . '/'), '', str_replace('\\', '/', $b->file)) : '[INTERNAL PHP]');
 		return (isset($b->line) && isset($b->file) ? '<tr>' : '<tr class="internal">')
