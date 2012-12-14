@@ -33,142 +33,131 @@ namespace DeBugger;
  *		reversed backtrace so it is displayed bottom up
  *		fixed file list args bug (null etc was converted to string)
  * @todo JS and Style need to be modified to work with the Theme in Lume.
- * @todo set some of the properties to private and use setters so they can be validated before code in run latter on in the script
- * @todo Custom Error logging to a file
- * @todo Email notifications
+ * @todo add custom sections
  * @todo release and update documentation. comments have been modified and the dumped code is now wrapped in htmlentities
+ * 
  */
 class DeBugger {
-
-	/**
-	 * path to jquery
-	 * @var string path to jQuery
-	 */
+	const LOG_ERROR = 'Error';
+	const LOG_EXCEPTION = 'Exception';
+	protected static $On;
+	protected static $LogError;
+	protected static $LogException;
+	protected static $LogEmail;
+	protected static $LogFile;
+	protected static $Theme;
+	protected static $Root;
 	public static $PathJQuery = '//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js';
-	
-	/**
-	 * path to the scripts directory for syntax highlighter
-	 * @var string path to the scripts folder fo syntax highlighter
-	 */
 	public static $PathSyntaxHighlighterScripts = 'syntaxhighlighter/scripts/';
+	protected static $LinesBefore		= 6;
+	protected static $LinesAfter		= 4;
+	protected static $DisplayHTTP		= TRUE;
+	protected static $DisplayRequest	= TRUE;
+	protected static $DisplayPost		= TRUE;
+	protected static $DisplayGet		= TRUE;
+	protected static $DisplayCookie		= TRUE;
+	protected static $DisplaySession	= TRUE;
+	protected static $DisplayServer		= TRUE;
+	
+	protected static $AutoLinks		= TRUE;
+	protected static $ClassName		= 'DeBugger';
+	protected static $Collapse		= FALSE;
+	protected static $Gutter		= TRUE;
+	protected static $HtmlScript	= FALSE;
+	protected static $SmartTabs		= TRUE;
+	protected static $TabSize		= 4;
+	protected static $Toolbar		= FALSE;
+	
+	public static function Start(){
+		self::$On = TRUE;
+		self::LogError();
+		self::LogException();
+		self::SetErrorHandler();
+		self::SetExceptionHandler();
+	}
+	
+	public static function LogError($bool = TRUE){
+		self::$LogError = (bool) $bool;
+	}
+	
+	public static function LogException($bool = TRUE){
+		self::$LogException = (bool) $bool;
+	}
 
-	/**
-	 * Set the number of lines of code to show before the error
-	 * @var int
-	 */
-	public static $LinesBefore = 6;
+	public static function Stop(){
+		self::$On = FALSE;
+		set_exception_handler(NULL);
+		set_error_handler(NULL);
+	}
 	
-	/**
-	 * Set the number of lines of code to show after the error
-	 * @var int
-	 */
-	public static $LinesAfter = 4;
+	public static function SetRoot($str = NULL){
+		self::$Root = ($str ? (string) $str : $_SERVER['DOCUMENT_ROOT'] . '/');
+	}
 	
-	/**
-	 * document root path. It will be stripd out the path from the file names on 
-	 * the error page. defaults to $_SERVER['DOCUMENT_ROOT']
-	 * @var string
-	 */
-	public static $Root;
+	public static function SetDisplayLines($before, $after){
+		self::$LinesBefore = (int) $before;
+		self::$LinesAfter = (int) $after;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_SERVER['http_*'] section
-	 * @var bool
-	 */
-	public static $DisplayHTTP = TRUE;
+	public static function SetDisplayHTTP($bool){
+		self::$DisplayHTTP = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_SERVER['request_*'] section
-	 * @var bool
-	 */
-	public static $DisplayRequest = TRUE;
+	public static function SetDisplayRequest($bool){
+		self::$DisplayRequest = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_POST[] variables
-	 * @var bool
-	 */
-	public static $DisplayPost = TRUE;
+	public static function SetDisplayPost($bool){
+		self::$DisplayPost = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_GET[] variables
-	 * @var bool
-	 */
-	public static $DisplayGet = TRUE;
+	public static function SetDisplayGet($bool){
+		self::$DisplayGet = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of $_COOKIE[]
-	 * @var bool
-	 */
-	public static $DisplayCookie = TRUE;
+	public static function SetDisplayCookie($bool){
+		self::$DisplayCookie = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_SESSION[] variables
-	 * @var bool
-	 */
-	public static $DisplaySession = TRUE;
+	public static function SetDisplaySession($bool){
+		self::$DisplaySession = (bool) $bool;
+	}
 	
-	/**
-	 * Turn on/off the display of the $_SERVER[] variables
-	 * @var bool
-	 */
-	public static $DisplayServer = TRUE;
+	public static function SetDisplayServer($bool){
+		self::$DisplayServer = (bool) $bool;
+	}
 	
-	/**
-	 * a DeBugger theme for display
-	 * @var DeBuggerTheme
-	 */
-	private static $Theme;
-
-	/**
-	 * Allows you to turn detection of links in the highlighted element on and off
-	 * @var bool
-	 */
-	public static $Auto_links = TRUE;
+	public static function SetAutoLinks($bool = TRUE){
+		self::$AutoLinks = (bool) $bool;
+	}
 	
-	/**
-	 * Allows you to add a custom class (or multiple classes) to every highlighter element that will be created on the page
-	 * @var string
-	 */
-	public static $Class_name = '';
+	public static function SetClassName($str = 'DeBugger'){
+		self::$ClassName= (string) $str;
+	}
 	
-	/**
-	 * Allows you to force highlighted elements on the page to be collapsed by default.
-	 * @var bool
-	 */
-	public static $Collapse = FALSE;
+	public static function SetGutter($bool = TRUE){
+		self::$Gutter = (bool) $bool;
+	}
 	
-	/**
-	 * Allows you to turn gutter with line numbers on and off
-	 * @var bool
-	 */
-	public static $Gutter = TRUE;
+	public static function SetAutoCollapse($bool = FALSE){
+		self::$Collapse = (bool) $bool;
+	}
 	
-	/**
-	 * Allows you to highlight a mixture of HTML/XML code and a script which is very common in web development. 
-	 * Setting this value to true requires that you have shBrushXml.js loaded and that the brush you are using supports this feature.
-	 * 
-	 * PHP code must have opening and closing tags to be rendered correctly if this is set to true
-	 * @var bool 
-	 */
-	public static $Html_script = FALSE;
+	public static function SetHtmlScript($bool = FALSE){
+		self::$HtmlScript = (bool) $bool;
+	}
 	
-	/**
-	 * Allows you to turn smart tabs feature on and off
-	 * @var bool
-	 */
-	public static $Smart_tabs = TRUE;
+	public static function SetSmartTabs($bool = TRUE){
+		self::$SmartTabs = (bool) $bool;
+	}
 	
-	/**
-	 * Allows you to adjust tab size
-	 * @var int
-	 */
-	public static $Tab_size = 4;
+	public static function SetTabSize($int = 4){
+		self::$TabSize = (int) 4;
+	}
 	
-	/**
-	 * Toggles toolbar on/off
-	 * @var bool
-	 */
-	public static $Toolbar = TRUE;
+	public static function SetToolbar($bool = FALSE){
+		self::$Toolbar = (bool) $bool;
+	}
 	
 	/**
 	 * An error Handler that echos a page and then dies. The page shows a full error backtrace, code from the errors and other usefull information.
@@ -188,11 +177,15 @@ class DeBugger {
 		//backtrace
 		$backtrace = debug_backtrace();
 		array_shift($backtrace);//remove the stack about this handler
+		
+		//parse
 		$data = self::_Parse($backtrace);
-
-		//title
 		$errname = self::GetErrorName($errno);
 		$title = "$errname: $errstr";
+		
+		//log
+		if(self::$LogError)
+			self::Log (self::LOG_ERROR, $title, $backtrace);
 		
 		//clean buffer
 		ob_get_contents();
@@ -201,6 +194,59 @@ class DeBugger {
 		//echo page
 		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
 		die();
+	}
+	
+	public static function ExceptionHandler(\Exception $exception) {		
+		//backtrace
+		$backtrace = $exception->getTrace();
+		array_unshift($backtrace, [
+			'file' => $exception->getFile(), 
+			'line' => $exception->getLine(),
+			'function' => get_class($exception),
+			'args' => [$exception->getMessage(), $exception->getCode(), ($exception->getPrevious() ?: 'NULL')]]);
+		
+		//parse
+		$data = self::_Parse($backtrace);
+		$title = $exception->getCode() . ': ' . $exception->getMessage();
+		
+		//log
+		if(self::$LogException)
+			self::Log (self::LOG_EXCEPTION, $title, $backtrace);
+		
+		//clean buffer
+		ob_get_contents();
+		ob_end_clean();
+		
+		//echo page
+		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
+		die();
+	}
+	
+	protected static function Log($type, $title, $backtrace){
+		//format
+		$date = date(\DATE_W3C);
+		$log =  PHP_EOL . "$type $title" . PHP_EOL
+			. "[$date] " . $_SERVER['REQUEST_URI'];
+		foreach($backtrace as $v){
+			$log .= PHP_EOL . "\t";
+			$log .= (isset($v['file']) ? $v['file'] : 'N/A') . ' ';
+			$log .= (isset($v['line']) ? $v['line'] : 'N/A ') . ': ';
+			$log .= (isset($v['function']) ? $v['function'] : 'INTERNAL ') . '(';
+			$log .= (isset($v['args']) ? implode(', ', $v['args']) : '') . ');';
+		}
+		
+		//log
+		error_log($log . PHP_EOL, 3, (self::$LogFile ?: date('Y-m-d') . '.log'));
+		
+		//email
+		if(!self::$LogEmail)
+			return;
+		
+		$msg = "An $type has been triggered on {$_SERVER['HTTP_HOST']}." . "\r\n"
+			. "Time: $date" . "\r\n"
+			. "Message: $title" . "\r\n"
+			. $log;
+		error_log($msg, 1, self::$LogEmail);
 	}
 	
 	/**
@@ -212,36 +258,14 @@ class DeBugger {
 	 * If null it will use the currently set error levels by using error_reportimg()
 	 * Errors that are not passed to the handler are completly ignored
 	 */
-	public static function SetErrorHandler($lv = NULL, $handler = NULL){
-		$handler = ($handler === NULL ? __NAMESPACE__ . '\DeBugger::ErrorHandler' : NULL);
+	private static function SetErrorHandler($lv = NULL){
 		$lv = ($lv === NULL ? error_reporting() : NULL);
-		set_error_handler($handler, $lv);
+		set_error_handler(__NAMESPACE__ . '\DeBugger::ErrorHandler', $lv);
 		ob_start();
 	}
 	
-	public static function SetExceptionHandler($handler = NULL){
-		set_exception_handler( __NAMESPACE__ . '\DeBugger::exception_handler');
-	}
-	
-	public static function exception_handler(\Exception $exception) {		
-		//backtrace
-		$backtrace = $exception->getTrace();
-		array_unshift($backtrace, [
-			'file' => $exception->getFile(), 
-			'line' => $exception->getLine(),
-			'function' => get_class($exception),
-			'args' => [$exception->getMessage(), $exception->getCode(), ($exception->getPrevious() ?: 'NULL')]]);
-		$data = self::_Parse($backtrace);
-		
-		//generate title from the code (like a custom error level) and message
-		$title = $exception->getCode() . ': ' . $exception->getMessage();
-		//clean buffer
-		ob_get_contents();
-		ob_end_clean();
-		
-		//echo page
-		echo self::_Page($title, $data['code'], $data['file'], $data['other']);
-		die();
+	private static function SetExceptionHandler(){
+		set_exception_handler( __NAMESPACE__ . '\DeBugger::ExceptionHandler');
 	}
 	
 	/**
@@ -309,11 +333,11 @@ class DeBugger {
 	public static function DumpCode($code){
 		echo "<pre class='brush: php;>"
 			. 'collapse: ' . (self::$Collapse ? 'true' : 'false') . ';'
-			. (self::$Class_name ? 'class-name: ' . self::$Class_name . ';' : '')
+			. (self::$ClassName ? 'class-name: ' . self::$ClassName . ';' : '')
 			. 'gutter: ' . (self::$Gutter ? 'true' : 'false') . ';'
-			. 'html-script: ' . (self::$Html_script ? 'true' : 'false') . ';'
-			. 'smart-tabs: ' . (self::$Smart_tabs ? 'true' : 'false') . ';'
-			. 'tab-size: ' . self::$Tab_size . ';'
+			. 'html-script: ' . (self::$HtmlScript ? 'true' : 'false') . ';'
+			. 'smart-tabs: ' . (self::$SmartTabs ? 'true' : 'false') . ';'
+			. 'tab-size: ' . self::$TabSize . ';'
 			. 'toolbar: ' . (self::$Toolbar ? 'true' : 'false') . ';'
 			. "'>"
 			. htmlentities($code)
@@ -392,13 +416,13 @@ class DeBugger {
 			. "<h3 class='comments'>$errline: $errfile</h3>"
 				. "<pre class='brush: php;>"
 					. 'collapse: false;'
-					. (self::$Class_name ? 'class-name: ' . self::$Class_name . ';' : '')
+					. (self::$ClassName ? 'class-name: ' . self::$ClassName . ';' : '')
 					. "first-line: $start;"
 					. 'gutter: ' . (self::$Gutter ? 'true' : 'false') . ';'
 					. 'highlight: ' . $errline . ';'
-					. 'html-script: ' . (self::$Html_script ? 'true' : 'false') . ';'
-					. 'smart-tabs: ' . (self::$Smart_tabs ? 'true' : 'false') . ';'
-					. 'tab-size: ' . self::$Tab_size . ';'
+					. 'html-script: ' . (self::$HtmlScript ? 'true' : 'false') . ';'
+					. 'smart-tabs: ' . (self::$SmartTabs ? 'true' : 'false') . ';'
+					. 'tab-size: ' . self::$TabSize . ';'
 					. 'toolbar: ' . (self::$Toolbar ? 'true' : 'false') . ';'
 				. "'>"
 					. $file
@@ -422,12 +446,12 @@ class DeBugger {
 			. "<td class='code'>"
 				. '<pre class=\'brush: php; '
 				. 'collapse: false;'
-				. (self::$Class_name ? 'class-name: ' . self::$Class_name . ';' : '')
+				. (self::$ClassName ? 'class-name: ' . self::$ClassName . ';' : '')
 				. "first-line: {$line};"
 				. 'gutter: true;'
 				. 'html-script: false;'
-				. 'smart-tabs: ' . (self::$Smart_tabs ? 'true' : 'false') . ';'
-				. 'tab-size: ' . self::$Tab_size . ';'
+				. 'smart-tabs: ' . (self::$SmartTabs ? 'true' : 'false') . ';'
+				. 'tab-size: ' . self::$TabSize . ';'
 				. 'toolbar: false;'
 				. '\'>'	
 					. htmlentities(

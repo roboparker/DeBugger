@@ -12,9 +12,8 @@ require 'DeBugger/DeBuggerThemeCollection.php';
 require 'Demo/autoloader.php';
 require 'err.php';
 use DeBugger\DeBugger;
-DeBugger::SetErrorHandler();
-DeBugger::SetExceptionHandler();
-DeBugger::$Root .= $_SERVER['DOCUMENT_ROOT'] . '/DeBugger/';
+DeBugger::Start();
+DeBugger::SetRoot($_SERVER['DOCUMENT_ROOT'] . '/DeBugger/');
 $e = new err();
 ?>
     </body>
