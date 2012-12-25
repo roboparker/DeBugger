@@ -379,7 +379,7 @@ class Display {
 				display: none;
 				margin-left: 3em;
 				font-size: 1em;
-				height: <?php echo (self::$LinesBefore + self::$LinesAfter) *1 + 3.7; ?>em;
+				height: <?php echo (self::$LinesBefore + self::$LinesAfter) *1.1 + 4.7; ?>em;
 			}
 			article>h3{
 				font-size: 1.2em;
