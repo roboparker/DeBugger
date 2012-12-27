@@ -159,6 +159,10 @@ class Core {
 	 * @param int $errline line of the error
 	 */
 	protected static function ErrorHandler($errno, $errstr, $errfile, $errline){
+		//surpress @ errors
+		if(error_reporting() == 0)
+			return;
+		
 		//backtrace
 		$backtrace = debug_backtrace();
 		array_shift($backtrace);//remove the stack about this handler
