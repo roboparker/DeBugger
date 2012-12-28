@@ -125,7 +125,7 @@ class Core {
 	public static function StartExceptionHandler(){
 		set_exception_handler(
 				function(\Exception $exception){
-					self::ErrorHandler($exception);
+					self::ExceptionHandler($exception);
 				});
 	}
 	
@@ -235,6 +235,10 @@ class Core {
 			$emailLog = self::FormatEmailLog($date, 'EXCEPTION', $title, $backtraceString);
 			self::LogEmail($date, $emailLog);
 		}
+		
+		$backtrace = self::BacktraceDefault($backtrace);
+		//display page
+		Display::Build($title, $backtrace);
 		
 		exit();
 	}
