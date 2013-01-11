@@ -109,13 +109,13 @@ class Display {
 	 * stores a debugger theme
 	 * @var \DeBugger\Themes\STD 
 	 */
-	private static $Theme;
+	protected static $Theme;
 	
 	/**
 	 * container for user added sections
 	 * @var array
 	 */
-	protected static $ExtraSection = [];
+	protected static $ExtraSection = array();
 
 	/**
 	 * set a debugger theme. if null the default will be used
@@ -137,27 +137,25 @@ class Display {
 	/**
 	 * get a user specific section by the name/title
 	 * @param string $name name/title of the section
-	 * @param array $data data to diplay in key value pairs
 	 * @return array
 	 */
-	public static function GetSection($name, array $dat){
+	protected static function GetSection($name){
 		return self::$ExtraSection[$name];
 	}
 	
 	/**
 	 * remove a user specified section from the display
 	 * @param type $name
-	 * @param array $dat
 	 */
-	public static function UnsetSection($name, array $dat){
+	public static function UnsetSection($name){
 		unset(self::$ExtraSection[$name]);
 	}
-
 
 	/**
 	 * build the page
 	 * @param string $title messgae
 	 * @param array $backtrace 
+	 * @return void
 	 */
 	public static function Build($title, $backtrace){
 		foreach($backtrace as $v){
@@ -275,7 +273,7 @@ class Display {
 	 * @param array $data section data
 	 * @return string
 	 */
-	private static function FormatOther($title, array $data){
+	protected static function FormatOther($title, array $data){
 		if(count($data) > 0){
 			ksort($data);
 			foreach($data as $k => $v){
@@ -310,7 +308,7 @@ class Display {
 	 */
 	public static function FormatArgs(array $args){
 		if(!count($args)) return '';
-		$formated = [];
+		$formated = array();
 		foreach($args as $v){
 			if( is_null($v) || is_bool($v) || is_numeric($v) || is_object($v) || is_resource($v))
 				$formated[] = $v;
@@ -337,12 +335,12 @@ class Display {
 			$('#code>article:nth-child(1)').show();
 			$('#code>table>tbody>tr:nth-child(1)').addClass('highlighted');
 		
-		$('#code>table>tbody>tr').live("click", function(){
+			$('#code>table>tbody>tr').live("click", function(){
 			if($(this).hasClass('highlighted') || $(this).hasClass('internal'))
 				return;
 			var index = $(this).index() +1;
-					$('#code>table>tbody>tr.highlighted').toggleClass('highlighted');
-					$(this).toggleClass('highlighted');
+			$('#code>table>tbody>tr.highlighted').toggleClass('highlighted');
+			$(this).toggleClass('highlighted');
 			$('#code>article:visible').fadeOut(500, function(){
 				$('#code>article:nth-child('+ index + ')').fadeIn(500);
 			});
