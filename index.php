@@ -16,13 +16,13 @@ spl_autoload_register(function($class){
 error_reporting(E_ALL);
 //setup
 use DeBugger\DeBugger;
-use DeBugger\SettingsStack;
+use DeBugger\Settings;
 
-$opt = new SettingsStack(SettingsStack::LogFile | SettingsStack::LogDisplay);
+$opt = new Settings(Settings::LogFile | Settings::LogDisplay);
 $opt->SetErrorLV(E_ALL);
 $opt->SetExceptionLV();
 $opt->SetFile('log.txt');
-DeBugger::SetStack($opt);
+DeBugger::SetSettings($opt);
 
 //$opt = new SettingsStack(SettingsStack::LogFile | SettingsStack::LogDisplay);
 //$opt->SetExceptionLV();

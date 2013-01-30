@@ -1,3 +1,0 @@
-EXCEPTION 0: foo
-[2013-01-26T00:24:58+01:00] /Debugger/index.php
-	Debugger\index.php 32: Exception ("foo", 0, NULL)
